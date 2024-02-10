@@ -1,4 +1,9 @@
-const { getAllLaunches, addNewLaunch } = require("../models/launches.model");
+const {
+  getAllLaunches,
+  addNewLaunch,
+  abortLaunchById,
+  existsLaunchWithId,
+} = require("../models/launches.model");
 
 const isDateValid = (dateStr) => !isNaN(new Date(dateStr));
 
@@ -28,7 +33,28 @@ const httpAddNewLaunch = (req, res) => {
   }
 };
 
+const httpAbortLaunch = (req, res) => {
+  try {
+    const launchId = Number(req.params.id);
+    if (!launchId) {
+      return res.status(400).json({ error: "missing launch id" });
+    }
+
+    if (!existsLaunchWithId(launchId)) {
+      return res.status(404).json({ error: "Launch not found" });
+    }
+
+    const aborted = abortLaunchById(launchId);
+    return res.status(200).json(aborted);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "something went wrong", error: error.message });
+  }
+};
+
 module.exports = {
   httpGetAllLaunches,
   httpAddNewLaunch,
+  httpAbortLaunch,
 };

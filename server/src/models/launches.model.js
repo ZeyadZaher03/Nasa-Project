@@ -29,31 +29,21 @@ const addNewLaunch = (launch) => {
   launches.set(latestFlightNumber, newLaunch);
 };
 
+const getLaunchById = (launchId) => launches.get(launchId);
+
+const existsLaunchWithId = (launchId) => launches.has(launchId);
+
+const abortLaunchById = (launchId) => {
+  const launch = getLaunchById(launchId);
+  launch.upcoming = false;
+  launch.success = false;
+  return launch;
+};
+
 module.exports = {
   launches,
   getAllLaunches,
   addNewLaunch,
+  abortLaunchById,
+  existsLaunchWithId,
 };
-
-[
-  {
-    flightNumber: 100,
-    mission: "Kepler Expoloration X",
-    rocket: "Explorer IS1",
-    launchDate: "2030-12-26T22:00:00.000Z",
-    target: "Kepler-442 b",
-    customers: ["Nasa", "ZTM"],
-    upcoming: true,
-    success: true,
-  },
-  {
-    flightNumber: 101,
-    mission: "ZOX",
-    rocket: "Explorer IS1",
-    target: "Kepler-1652 b",
-    launchDate: "2024-02-10T00:00:00.000Z",
-    customers: ["Nasa", "ZTM"],
-    success: true,
-    upcoming: true,
-  },
-];

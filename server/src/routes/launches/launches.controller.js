@@ -3,9 +3,7 @@ const {
   addNewLaunch,
   abortLaunchById,
   existsLaunchWithId,
-} = require("../models/launches.model");
-
-const isDateValid = (dateStr) => !isNaN(new Date(dateStr));
+} = require("../../models/launches.model");
 
 const httpGetAllLaunches = (req, res) => {
   return res.status(200).json(getAllLaunches());
@@ -13,21 +11,19 @@ const httpGetAllLaunches = (req, res) => {
 
 const httpAddNewLaunch = (req, res) => {
   try {
-    const { mission, rocket, target, launchDate } = req.body;
-    if (!isDateValid(launchDate)) {
-      return res.status(400).json({ error: "please enter a valid Date" });
-    }
+    const launch = req.body;
+    const { mission, rocket, target, launchDate } = launch;
     if (!mission || !rocket || !target || !launchDate) {
-      return res.status(400).json({ error: "missing value" });
+      return res
+        .status(400)
+        .json({ error: "Missing required launch property" });
     }
-    const launch = {
-      mission,
-      rocket,
-      target,
-      launchDate: new Date(launchDate),
-    };
+    launch.launchDate = new Date(launch.launchDate);
+    if (isNaN(launch.launchDate)) {
+      return res.status(400).json({ error: "Invalid launch date" });
+    }
     addNewLaunch(launch);
-    return res.status(201).json({ launch });
+    return res.status(201).json(launch);
   } catch (error) {
     return res.status(500).json({ error: "something went wrong" });
   }

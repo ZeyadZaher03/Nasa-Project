@@ -1,6 +1,58 @@
-const launches = new Map();
+const launchesDB = require("./launches.mongo");
+const planets = require("./planets.mongo");
 
-let latestFlightNumber = 100;
+const DEFAULT_FLIGHT_NUMBER = 100;
+
+const getLatestFlightNumber = async () => {
+  const latestLaunch = await launchesDB.findOne({}).sort("-flightNumber");
+  if (!latestLaunch) {
+    return DEFAULT_FLIGHT_NUMBER;
+  }
+  return latestLaunch.flightNumber;
+};
+getLatestFlightNumber();
+
+const getAllLaunches = async () => {
+  return await launchesDB.find({}, { _id: 0, __v: 0 });
+};
+
+const saveLaunch = async (launch) => {
+  try {
+    await launchesDB.findOneAndUpdate(
+      { flightNumber: launch.flightNumber },
+      launch,
+      {
+        upsert: true,
+      }
+    );
+  } catch (error) {
+    console.error(`Could not save launch`, error);
+  }
+};
+
+const scheduleNewLaunch = async (launch) => {
+  const planet = await planets.findOne({
+    keplerName: launch.target,
+  });
+
+  if (!planet) {
+    throw new Error("No matching planets were found");
+  }
+
+  const launchFlightNumber = (await getLatestFlightNumber()) + 1;
+  const launchData = Object.assign(launch, {
+    success: true,
+    upcoming: true,
+    customers: ["Zero to Mastery", "NASA"],
+    flightNumber: launchFlightNumber,
+  });
+
+  return saveLaunch(launchData);
+};
+
+const existsLaunchWithId = async (launchId) => {
+  return await launchesDB.findOne({ flightNumber: launchId });
+};
 
 const launch = {
   flightNumber: 100,
@@ -13,37 +65,25 @@ const launch = {
   success: true,
 };
 
-launches.set(launch.flightNumber, launch);
+scheduleNewLaunch(launch);
 
-const getAllLaunches = () => Array.from(launches.values());
+const abortLaunchById = async (launchId) => {
+  const aborted = await launchesDB.updateOne(
+    {
+      flightNumber: launchId,
+    },
+    {
+      upcoming: false,
+      success: false,
+    }
+  );
 
-const addNewLaunch = (launch) => {
-  latestFlightNumber++;
-  const newLaunch = {
-    flightNumber: latestFlightNumber,
-    ...launch,
-    customers: ["Nasa", "ZTM"],
-    success: true,
-    upcoming: true,
-  };
-  launches.set(latestFlightNumber, newLaunch);
-};
-
-const getLaunchById = (launchId) => launches.get(launchId);
-
-const existsLaunchWithId = (launchId) => launches.has(launchId);
-
-const abortLaunchById = (launchId) => {
-  const launch = getLaunchById(launchId);
-  launch.upcoming = false;
-  launch.success = false;
-  return launch;
+  return aborted.acknowledged === true && aborted.modifiedCount === 1;
 };
 
 module.exports = {
-  launches,
   getAllLaunches,
-  addNewLaunch,
+  scheduleNewLaunch,
   abortLaunchById,
   existsLaunchWithId,
 };

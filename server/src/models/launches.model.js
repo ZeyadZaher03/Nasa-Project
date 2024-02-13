@@ -1,24 +1,23 @@
-const launchesDB = require("./launches.mongo");
+const launches = require("./launches.mongo");
 const planets = require("./planets.mongo");
 
 const DEFAULT_FLIGHT_NUMBER = 100;
 
 const getLatestFlightNumber = async () => {
-  const latestLaunch = await launchesDB.findOne({}).sort("-flightNumber");
+  const latestLaunch = await launches.findOne({}).sort("-flightNumber");
   if (!latestLaunch) {
     return DEFAULT_FLIGHT_NUMBER;
   }
   return latestLaunch.flightNumber;
 };
-getLatestFlightNumber();
 
 const getAllLaunches = async () => {
-  return await launchesDB.find({}, { _id: 0, __v: 0 });
+  return await launches.find({}, { _id: 0, __v: 0 });
 };
 
 const saveLaunch = async (launch) => {
   try {
-    await launchesDB.findOneAndUpdate(
+    await launches.findOneAndUpdate(
       { flightNumber: launch.flightNumber },
       launch,
       {
@@ -51,24 +50,11 @@ const scheduleNewLaunch = async (launch) => {
 };
 
 const existsLaunchWithId = async (launchId) => {
-  return await launchesDB.findOne({ flightNumber: launchId });
+  return await launches.findOne({ flightNumber: launchId });
 };
-
-const launch = {
-  flightNumber: 100,
-  mission: "Kepler Expoloration X",
-  rocket: "Explorer IS1",
-  launchDate: new Date("December 27, 2030"),
-  target: "Kepler-442 b",
-  customers: ["Nasa", "ZTM"],
-  upcoming: true,
-  success: true,
-};
-
-scheduleNewLaunch(launch);
 
 const abortLaunchById = async (launchId) => {
-  const aborted = await launchesDB.updateOne(
+  const aborted = await launches.updateOne(
     {
       flightNumber: launchId,
     },

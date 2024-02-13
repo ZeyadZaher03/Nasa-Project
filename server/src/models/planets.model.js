@@ -23,7 +23,7 @@ const savePlanet = async (planet) => {
 };
 
 const getAllPlanets = async () => {
-  return planets.find({}, { _id: 0, __v: 0 });
+  return await planets.find({}, { _id: 0, __v: 0 });
 };
 
 const isHabitable = (planet) => {
